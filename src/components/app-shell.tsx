@@ -38,13 +38,23 @@ const nav: NavItem[] = [
 
 export function AppShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  // The app is fully client-rendered (localStorage-backed store + demo seed).
+  // Gate rendering on mount so the prerendered shell and the first client
+  // paint match exactly — otherwise persisted/seeded data on a return visit
+  // would differ from the empty server render and trip React hydration.
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
     void (async () => {
       const { ensureHydrated } = await import("@/lib/store");
       await ensureHydrated();
       ensureSeed();
+      setMounted(true);
     })();
   }, []);
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-background" />;
+  }
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
